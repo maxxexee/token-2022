@@ -87,7 +87,10 @@ impl ProgramClient<ProgramRpcClientSendTransaction> for RecordClient {
 
 fn token(payer: Arc<Keypair>) -> (Token<ProgramRpcClientSendTransaction>, Arc<RecordClient>) {
     let client = Arc::new(RecordClient {
-        offline: ProgramOfflineClient::new(Hash::new_unique(), ProgramRpcClientSendTransaction),
+        offline: ProgramOfflineClient::new(
+            Hash::new_unique(),
+            ProgramRpcClientSendTransaction::default(),
+        ),
         sent: AtomicUsize::new(0),
         simulations: Mutex::new(Vec::new()),
     });

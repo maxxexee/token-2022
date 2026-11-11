@@ -281,7 +281,7 @@ fn test_config_with_default_signer<'a>(
     let program_client: Arc<dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync> =
         Arc::new(ProgramRpcClient::new(
             rpc_client.clone(),
-            ProgramRpcClientSendTransaction,
+            ProgramRpcClientSendTransaction::default(),
         ));
     Config {
         rpc_client,
@@ -341,7 +341,7 @@ fn test_config_without_default_signer<'a>(
     let program_client: Arc<dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync> =
         Arc::new(ProgramRpcClient::new(
             rpc_client.clone(),
-            ProgramRpcClientSendTransaction,
+            ProgramRpcClientSendTransaction::default(),
         ));
     Config {
         rpc_client,
@@ -3637,7 +3637,7 @@ async fn configure_confidential_transfer_partial_failure(
     config.rpc_client = rpc_client.clone();
     config.program_client = Arc::new(ProgramRpcClient::new(
         rpc_client,
-        ProgramRpcClientSendTransaction,
+        ProgramRpcClientSendTransaction::default(),
     ));
     let payer_file = NamedTempFile::new().unwrap();
     write_keypair_file(payer, &payer_file).unwrap();
@@ -4287,7 +4287,7 @@ async fn confidential_transfer(test_validator: &TestValidator, payer: &Keypair) 
     ));
     snapshot_config.program_client = Arc::new(ProgramRpcClient::new(
         snapshot_config.rpc_client.clone(),
-        ProgramRpcClientSendTransaction,
+        ProgramRpcClientSendTransaction::default(),
     ));
 
     // With `--decrypt`, the public amount and pending confidential balance
@@ -6222,7 +6222,7 @@ async fn do_offline_multisig_transfer(
             dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync,
         > = Arc::new(ProgramOfflineClient::new(
             blockhash,
-            ProgramRpcClientSendTransaction,
+            ProgramRpcClientSendTransaction::default(),
         ));
         let mut args = vec![
             "spl-token".to_string(),
@@ -6286,7 +6286,7 @@ async fn do_offline_multisig_transfer(
             dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync,
         > = Arc::new(ProgramRpcClient::new(
             config.rpc_client.clone(),
-            ProgramRpcClientSendTransaction,
+            ProgramRpcClientSendTransaction::default(),
         ));
         config.program_client = rpc_program_client;
         let mut args = vec![
@@ -6967,7 +6967,7 @@ async fn transfer_hook(test_validator: &TestValidator, payer: &Keypair) {
     let program_client: Arc<dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync> =
         Arc::new(ProgramOfflineClient::new(
             blockhash,
-            ProgramRpcClientSendTransaction,
+            ProgramRpcClientSendTransaction::default(),
         ));
     config.program_client = program_client;
     let _result = exec_test_cmd(
@@ -7085,7 +7085,7 @@ async fn transfer_hook_with_transfer_fee(test_validator: &TestValidator, payer: 
     let program_client: Arc<dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync> =
         Arc::new(ProgramOfflineClient::new(
             blockhash,
-            ProgramRpcClientSendTransaction,
+            ProgramRpcClientSendTransaction::default(),
         ));
     config.program_client = program_client;
 

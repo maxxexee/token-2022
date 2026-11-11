@@ -119,21 +119,27 @@ impl<'a> Config<'a> {
             DEFAULT_CONFIRM_TX_TIMEOUT,
         ));
         let sign_only = matches.try_contains_id(SIGN_ONLY_ARG.name).unwrap_or(false);
+        // `--no-wait` belongs to the transfer subcommand, so it is not a valid
+        // argument for other commands. The token client methods confirm internally,
+        // so the sender has to skip confirmation for the flag to have any effect.
+        // A confidential transfer sends several dependent transactions and has to
+        // confirm each one, so it keeps the confirming sender.
+        let no_wait = matches.try_contains_id("no_wait").unwrap_or(false)
+            && !matches.try_contains_id("confidential").unwrap_or(false);
+        let send_transaction = if no_wait {
+            ProgramRpcClientSendTransaction::send_only()
+        } else {
+            ProgramRpcClientSendTransaction::send_and_confirm()
+        };
         let program_client: Arc<dyn ProgramClient<ProgramRpcClientSendTransaction> + Send + Sync> =
             if sign_only {
                 let blockhash = matches
                     .get_one::<Hash>(BLOCKHASH_ARG.name)
                     .copied()
                     .unwrap_or_default();
-                Arc::new(ProgramOfflineClient::new(
-                    blockhash,
-                    ProgramRpcClientSendTransaction,
-                ))
+                Arc::new(ProgramOfflineClient::new(blockhash, send_transaction))
             } else {
-                Arc::new(ProgramRpcClient::new(
-                    rpc_client.clone(),
-                    ProgramRpcClientSendTransaction,
-                ))
+                Arc::new(ProgramRpcClient::new(rpc_client.clone(), send_transaction))
             };
         Self::new_with_clients_and_ws_url(
             matches,

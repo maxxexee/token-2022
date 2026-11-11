@@ -132,8 +132,34 @@ pub trait SimulateTransactionRpc: SimulateTransaction {
     ) -> BoxFuture<'a, ProgramClientResult<Self::SimulationOutput>>;
 }
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ProgramRpcClientSendTransaction;
+/// Sends a transaction through an `RpcClient`.
+///
+/// Defaults to waiting for confirmation, which is what the `Token` methods
+/// assume. Use [`ProgramRpcClientSendTransaction::send_only`] when the caller
+/// confirms on its own, as `spl-token transfer --no-wait` does.
+#[derive(Debug, Clone, Copy)]
+pub struct ProgramRpcClientSendTransaction {
+    confirm: bool,
+}
+
+impl ProgramRpcClientSendTransaction {
+    /// Waits for the transaction to be confirmed before returning.
+    pub const fn send_and_confirm() -> Self {
+        Self { confirm: true }
+    }
+
+    /// Returns the signature as soon as the transaction is sent, without
+    /// waiting for confirmation.
+    pub const fn send_only() -> Self {
+        Self { confirm: false }
+    }
+}
+
+impl Default for ProgramRpcClientSendTransaction {
+    fn default() -> Self {
+        Self::send_and_confirm()
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::large_enum_variant)]
@@ -153,14 +179,18 @@ impl SendTransactionRpc for ProgramRpcClientSendTransaction {
         client: &'a RpcClient,
         transaction: &'a Transaction,
     ) -> BoxFuture<'a, ProgramClientResult<Self::Output>> {
+        let confirm = self.confirm;
         Box::pin(async move {
             if !transaction.is_signed() {
                 return Err("Cannot send transaction: not fully signed".into());
             }
 
-            client
-                .send_and_confirm_transaction(transaction)
-                .await
+            let signature = if confirm {
+                client.send_and_confirm_transaction(transaction).await
+            } else {
+                client.send_transaction(transaction).await
+            };
+            signature
                 .map(RpcClientResponse::Signature)
                 .map_err(Into::into)
         })
